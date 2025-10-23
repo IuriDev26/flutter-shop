@@ -1,7 +1,7 @@
 import 'package:shop/model/cart_item.dart';
 
 class Order {
-  final String id;
+  String id;
   final double amount;
   final List<CartItem> items;
   final DateTime dateTime;
@@ -12,5 +12,11 @@ class Order {
     required this.items,
     required this.dateTime,
     });
+
+  Map<String, dynamic> toJson() => {
+    "amount": amount,
+    "items": items.map( (item) => item.toJson() ).toList(),
+    "dateTime": dateTime.toIso8601String()
+  };
 
 }

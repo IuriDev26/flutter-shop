@@ -1,41 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shop/app_routes.dart';
-import 'package:shop/model/cart.dart';
+import 'package:shop/exceptions/http_exceptions.dart';
 import 'package:shop/model/product.dart';
+import 'package:shop/model/product_list.dart';
 
 class ProductItem extends StatelessWidget {
+  final Product product;
 
-  const ProductItem({super.key});
+  const ProductItem({super.key, required this.product});
+
+  _removeProduct(BuildContext context, String productId) {
+    var products = Provider.of<ProductList>(context, listen: false);
+
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Atenção'),
+        content: Text('Deseja realmente excluir o produto?'),
+        actions: [
+          TextButton(
+            onPressed: () async {
+
+              try {
+                await products.removeProduct(productId);
+              } on HttpExceptions catch (error) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+              }
+              finally{
+                Navigator.of(context).pop();
+              }
+
+              
+            },
+            child: Text('Sim'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Não'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final Product product = Provider.of<Product>(context);
-    final Cart cart = Provider.of<Cart>(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: GridTile(
-        footer: GridTileBar(
-          leading: IconButton(
-            icon: Icon( product.isFavorite ? Icons.favorite : Icons.favorite_border),
-            onPressed: () => product.toggleFavorite(),
-            color: Theme.of(context).colorScheme.secondary,
+    return Column(
+      children: [
+        ListTile(
+          leading: CircleAvatar(
+            backgroundImage: NetworkImage(product.imageUrl),
           ),
-          trailing: IconButton(
-            icon: Icon(Icons.shopping_cart),
-            onPressed: () => cart.add(product),
-            color: Theme.of(context).colorScheme.secondary,
+          title: Text(product.title),
+          trailing: SizedBox(
+            width: 100,
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.of(
+                    context,
+                  ).pushNamed(AppRoutes.productForm, arguments: product),
+                  icon: Icon(
+                    Icons.edit,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => _removeProduct(context, product.id),
+                  icon: Icon(
+                    Icons.delete,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ],
+            ),
           ),
-          title: Text(product.title, textAlign: TextAlign.center),
-          backgroundColor: Colors.black87,
         ),
-        child: GestureDetector(
-          child: Image.network(product.imageUrl, fit: BoxFit.cover),
-          onTap: () {
-            Navigator.of(context).pushNamed(AppRoutes.productDetail, arguments: product);
-          },
-        ),
-      ),
+        Divider(),
+      ],
     );
   }
 }

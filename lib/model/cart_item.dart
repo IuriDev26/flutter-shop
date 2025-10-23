@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 
 class CartItem {
   final String id;
@@ -26,4 +25,15 @@ class CartItem {
   }
 
   get totalPrice => unitPrice * quantity; 
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "productId": productId,
+    "unitPrice": unitPrice,
+    "quantity": quantity,
+    "title": title,
+    "imageUrl": imageUrl
+  };
+
+
 }

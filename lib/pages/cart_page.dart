@@ -7,6 +7,28 @@ import 'package:shop/model/orders_list.dart';
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
 
+  Future<bool?> _confirmDismiss(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Atenção"),
+          content: Text('Deseja realemente remover esse item do carrinho?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Não'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Sim'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final Cart cart = Provider.of(context);
@@ -34,6 +56,7 @@ class CartPage extends StatelessWidget {
                     child: Icon(Icons.delete, color: Colors.white, size: 30),
                   ),
                 ),
+                confirmDismiss: (_) => _confirmDismiss(context),
                 onDismissed: (_) => cart.remove(cart.items[index].productId),
                 child: CartItemWidget(item: cart.items[index]),
               ),
@@ -61,15 +84,30 @@ class CartPage extends StatelessWidget {
                 ],
               ),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (cart.itemCount == 0) return;
 
-                  Provider.of<OrdersList>(
-                    context,
-                    listen: false,
-                  ).addOrder(cart);
-
-                  cart.clear();
+                  try {
+                    await Provider.of<OrdersList>(
+                      context,
+                      listen: false,
+                    ).addOrder(cart);
+                    cart.clear();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Sucesso ao processar sua venda'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    Navigator.of(context).pop();
+                  } catch (error) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erro ao processar sua venda'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 },
                 child: Text('Comprar'),
               ),
